@@ -5,7 +5,7 @@ import tensorflow as tf
 import tf2lib as tl
 
 import data
-import module
+import module, os
 
 # ==============================================================================
 # =                                   param                                    =
@@ -23,11 +23,18 @@ args.__dict__.update(test_args.__dict__)
 # ==============================================================================
 
 # data
-A_img_paths_test = py.glob(py.join(args.datasets_dir, args.dataset, 'testA'), '*.jpg')
-B_img_paths_test = py.glob(py.join(args.datasets_dir, args.dataset, 'testB'), '*.jpg')
-A_dataset_test = data.make_dataset(A_img_paths_test, args.batch_size, args.load_size, args.crop_size,
+# A_img_paths_test = py.glob(py.join(args.datasets_dir, args.dataset, 'testA'), '*.jpg')
+# B_img_paths_test = py.glob(py.join(args.datasets_dir, args.dataset, 'testB'), '*.jpg')
+# A_dataset_test = data.make_dataset(A_img_paths_test, args.batch_size, args.load_size, args.crop_size,
+#                                    training=False, drop_remainder=False, shuffle=False, repeat=1)
+# B_dataset_test = data.make_dataset(B_img_paths_test, args.batch_size, args.load_size, args.crop_size,
+#                                    training=False, drop_remainder=False, shuffle=False, repeat=1)
+
+lve_imgpaths = tf.io.gfile.glob(os.path.join(py.join(args.datasets_dir, 'test'), '[!2018]*.png'))
+lv_imgpaths = tf.io.gfile.glob(os.path.join(py.join(args.datasets_dir, 'test'), '2018*.png'))
+A_dataset_test = data.make_dataset(lve_imgpaths, args.batch_size, args.load_size, args.crop_size,
                                    training=False, drop_remainder=False, shuffle=False, repeat=1)
-B_dataset_test = data.make_dataset(B_img_paths_test, args.batch_size, args.load_size, args.crop_size,
+B_dataset_test = data.make_dataset(lv_imgpaths, args.batch_size, args.load_size, args.crop_size,
                                    training=False, drop_remainder=False, shuffle=False, repeat=1)
 
 # model
@@ -60,7 +67,7 @@ for A in A_dataset_test:
     A2B, A2B2A = sample_A2B(A)
     for A_i, A2B_i, A2B2A_i in zip(A, A2B, A2B2A):
         img = np.concatenate([A_i.numpy(), A2B_i.numpy(), A2B2A_i.numpy()], axis=1)
-        im.imwrite(img, py.join(save_dir, py.name_ext(A_img_paths_test[i])))
+        im.imwrite(img, py.join(save_dir, py.name_ext(lve_imgpaths[i])))
         i += 1
 
 save_dir = py.join(args.experiment_dir, 'samples_testing', 'B2A')
@@ -70,5 +77,5 @@ for B in B_dataset_test:
     B2A, B2A2B = sample_B2A(B)
     for B_i, B2A_i, B2A2B_i in zip(B, B2A, B2A2B):
         img = np.concatenate([B_i.numpy(), B2A_i.numpy(), B2A2B_i.numpy()], axis=1)
-        im.imwrite(img, py.join(save_dir, py.name_ext(B_img_paths_test[i])))
+        im.imwrite(img, py.join(save_dir, py.name_ext(lv_imgpaths[i])))
         i += 1

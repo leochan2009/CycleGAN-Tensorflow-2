@@ -20,7 +20,10 @@ def imread(path, as_gray=False, **kwargs):
 
 def imwrite(image, path, quality=95, **plugin_args):
     """Save a [-1.0, 1.0] image."""
-    iio.imsave(path, dtype.im2uint(image), quality=quality, **plugin_args)
+    if path[-4:] == ".png":
+        iio.imsave(path, dtype.im2uint(image), **plugin_args)
+    else:
+        iio.imsave(path, dtype.im2uint(image), quality=quality, **plugin_args)
 
 
 def imshow(image):
