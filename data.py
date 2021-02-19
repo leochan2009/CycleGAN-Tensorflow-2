@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import tf2lib as tl
+import os
 
 
 def make_dataset(img_paths, batch_size, load_size, crop_size, training, drop_remainder=True, shuffle=True, repeat=1):
@@ -48,6 +49,28 @@ def make_zip_dataset(A_img_paths, B_img_paths, batch_size, load_size, crop_size,
     len_dataset = max(len(A_img_paths), len(B_img_paths)) // batch_size
 
     return A_B_dataset, len_dataset
+
+def make_zip_dataset_from_single_dir(img_dir, batch_size, load_size, crop_size, training, shuffle=True, repeat=False):
+    lve_imgpaths = tf.io.gfile.glob(os.path.join(img_dir, '[!2018]*.png'))
+    lv_imgpaths = tf.io.gfile.glob(os.path.join(img_dir, '2018*.png'))
+    #zip two datasets aligned by the longer one
+    if repeat:
+        lve_repeat = lv_repeat = None  # cycle both
+    else:
+        if len(lve_imgpaths) >= len(lv_imgpaths):
+            lve_repeat = 1
+            lv_repeat = None  # cycle the shorter one
+        else:
+            lve_repeat = None  # cycle the shorter one
+            lv_repeat = 1
+
+    lve_dataset = make_dataset(lve_imgpaths, batch_size, load_size, crop_size, training, drop_remainder=True, shuffle=shuffle, repeat=lve_repeat)
+    lv_dataset = make_dataset(lv_imgpaths, batch_size, load_size, crop_size, training, drop_remainder=True, shuffle=shuffle, repeat=lv_repeat)
+
+    lve_lv_dataset = tf.data.Dataset.zip((lve_dataset, lv_dataset))
+    len_dataset = max(len(lve_imgpaths), len(lv_imgpaths)) // batch_size
+
+    return lve_lv_dataset, len_dataset
 
 
 class ItemPool:
